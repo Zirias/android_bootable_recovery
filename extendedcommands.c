@@ -1441,38 +1441,44 @@ void show_advanced_menu()
                                 "",
                                 NULL
     };
-
-    static char* list[] = { "reboot recovery",
-                            "reboot to bootloader",
-                            "power off",
-                            "wipe dalvik cache",
-                            "report error",
-                            "key test",
-                            "show log",
-                            "partition sdcard",
-                            "partition external sdcard",
-                            "partition internal sdcard",
-                            NULL
-    };
-
-    char bootloader_mode[PROPERTY_VALUE_MAX];
-    property_get("ro.bootloader.mode", bootloader_mode, "");
-    if (!strcmp(bootloader_mode, "download")) {
-        list[1] = "reboot to download mode";
-    }
-
-    if (!can_partition("/sdcard")) {
-        list[7] = NULL;
-    }
-    if (!can_partition("/external_sd")) {
-        list[8] = NULL;
-    }
-    if (!can_partition("/emmc")) {
-        list[9] = NULL;
-    }
+    int system;
 
     for (;;)
     {
+        char* list[] = { "reboot recovery",
+			 "reboot to bootloader",
+                         "power off",
+                         "wipe dalvik cache",
+                         "report error",
+                         "key test",
+                         "show log",
+                         "partition sdcard",
+                         "partition external sdcard",
+                         "partition internal sdcard",
+                         "active system: ",
+                         NULL
+        };
+
+        if (!can_partition("/sdcard")) {
+            list[7] = NULL;
+        }
+        if (!can_partition("/external_sd")) {
+            list[8] = NULL;
+        }
+        if (!can_partition("/emmc")) {
+            list[9] = NULL;
+        }
+
+        if (is_dualsystem()) {
+            char bootmode[13];
+            getBootmode(&bootmode);
+            if(strcmp(bootmode, "boot-system0")==0)
+                list[10]="active system: 1";
+            else if(strcmp(bootmode, "boot-system1")==0)
+                list[10]="active system: 2";
+            else
+                list[10]=NULL;
+        }
         int chosen_item = get_filtered_menu_selection(headers, list, 0, 0, sizeof(list) / sizeof(char*));
         if (chosen_item == GO_BACK)
             break;
@@ -1543,6 +1549,13 @@ void show_advanced_menu()
                 break;
             case 9:
                 partition_sdcard("/emmc");
+                break;
+            case 10:
+                system = select_system("Set bootmode:");
+                if(system==DUALBOOT_ITEM_SYSTEM0)
+                    setBootmode("boot-system0");
+                else if(system==DUALBOOT_ITEM_SYSTEM1)
+                    setBootmode("boot-system1");
                 break;
         }
     }
@@ -1818,4 +1831,44 @@ int select_dualboot_restoremode(const char* title)
                       NULL };
     int chosen_item = get_menu_selection(headers, items, 0, 0);
     return chosen_item;
+}
+
+int setBootmode(char* bootmode) {
+   // open misc-partition
+   FILE* misc = fopen("/dev/block/platform/msm_sdcc.1/by-name/misc", "wb");
+   if (misc == NULL) {
+      printf("Error opening misc partition.\n");
+      return -1;
+   }
+
+   // write bootmode
+   fseek(misc, 0x1000, SEEK_SET);
+   if(fputs(bootmode, misc)<0) {
+      printf("Error writing bootmode to misc partition.\n");
+      return -1;
+   }
+
+   // close
+   fclose(misc);
+   return 0;
+}
+
+int getBootmode(char* bootmode) {
+   // open misc-partition
+   FILE* misc = fopen("/dev/block/platform/msm_sdcc.1/by-name/misc", "rb");
+   if (misc == NULL) {
+      printf("Error opening misc partition.\n");
+      return -1;
+   }
+
+   // write bootmode
+   fseek(misc, 0x1000, SEEK_SET);
+   if(fgets(bootmode, 13, misc)==NULL) {
+      printf("Error reading bootmode from misc partition.\n");
+      return -1;
+   }
+
+   // close
+   fclose(misc);
+   return 0;
 }
