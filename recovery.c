@@ -888,7 +888,7 @@ main(int argc, char **argv) {
 
     if (!sehandle) {
         fprintf(stderr, "Warning: No file_contexts\n");
-        ui_print("Warning:  No file_contexts\n");
+        // ui_print("Warning:  No file_contexts\n");
     }
 
     LOGI("device_recovery_start()\n");
@@ -926,9 +926,7 @@ main(int argc, char **argv) {
         if (status != INSTALL_SUCCESS) ui_print("Installation aborted.\n");
     } else if (wipe_data) {
         if (device_wipe_data()) status = INSTALL_ERROR;
-        ignore_data_media_workaround(1);
         if (erase_volume("/data")) status = INSTALL_ERROR;
-        ignore_data_media_workaround(0);
         if (has_datadata() && erase_volume("/datadata")) status = INSTALL_ERROR;
         if (wipe_cache && erase_volume("/cache")) status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui_print("Data wipe failed.\n");
