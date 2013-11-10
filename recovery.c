@@ -768,7 +768,8 @@ setup_adbd() {
 
 // call a clean reboot
 void reboot_main_system(int cmd, int flags, char *arg) {
-    verify_root_and_recovery();
+    verify_root_and_recovery(DUALBOOT_ITEM_SYSTEM0);
+    if(is_dualsystem()) verify_root_and_recovery(DUALBOOT_ITEM_SYSTEM1);
     finish_recovery(NULL); // sync() in here
     android_reboot(cmd, flags, arg);
 }
@@ -1000,7 +1001,8 @@ main(int argc, char **argv) {
         prompt_and_wait();
     }
 
-    verify_root_and_recovery();
+    verify_root_and_recovery(DUALBOOT_ITEM_SYSTEM0);
+    if(is_dualsystem()) verify_root_and_recovery(DUALBOOT_ITEM_SYSTEM1);
 
     // If there is a radio image pending, reboot now to install it.
     maybe_install_firmware_update(send_intent);
