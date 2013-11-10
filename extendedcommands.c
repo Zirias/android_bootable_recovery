@@ -1443,10 +1443,13 @@ void show_advanced_menu()
     };
     int system;
 
+    char bootloader_mode[PROPERTY_VALUE_MAX];
+    property_get("ro.bootloader.mode", bootloader_mode, "");
+
     for (;;)
     {
         char* list[] = { "reboot recovery",
-			 "reboot to bootloader",
+			 NULL,
                          "power off",
                          "wipe dalvik cache",
                          "report error",
@@ -1468,6 +1471,12 @@ void show_advanced_menu()
         if (!can_partition("/emmc")) {
             list[9] = NULL;
         }
+
+	if (!strcmp(bootloader_mode, "download")) {
+	    list[1] = "reboot to download mode";
+	} else {
+	    list[1] = "reboot to bootloader";
+	}
 
         if (is_dualsystem()) {
             char bootmode[13];
@@ -1835,7 +1844,7 @@ int select_dualboot_restoremode(const char* title)
 
 int setBootmode(char* bootmode) {
    // open misc-partition
-   FILE* misc = fopen("/dev/block/platform/msm_sdcc.1/by-name/misc", "wb");
+   FILE* misc = fopen(volume_for_path("/misc")->device, "wb");
    if (misc == NULL) {
       printf("Error opening misc partition.\n");
       return -1;
@@ -1855,13 +1864,13 @@ int setBootmode(char* bootmode) {
 
 int getBootmode(char* bootmode) {
    // open misc-partition
-   FILE* misc = fopen("/dev/block/platform/msm_sdcc.1/by-name/misc", "rb");
+   FILE* misc = fopen(volume_for_path("/misc")->device, "rb");
    if (misc == NULL) {
       printf("Error opening misc partition.\n");
       return -1;
    }
 
-   // write bootmode
+   // read bootmode
    fseek(misc, 0x1000, SEEK_SET);
    if(fgets(bootmode, 13, misc)==NULL) {
       printf("Error reading bootmode from misc partition.\n");
