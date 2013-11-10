@@ -45,7 +45,7 @@
 
 int signature_check_enabled = 1;
 int script_assert_enabled = 1;
-static const char *SDCARD_UPDATE_FILE = "/sdcard/update.zip";
+static const char *SDCARD_UPDATE_FILE = "/sdcard/0/update.zip";
 
 int
 get_filtered_menu_selection(char** headers, char** items, int menu_only, int initial_selection, int items_count) {
@@ -88,10 +88,7 @@ void write_string_to_file(const char* filename, const char* string) {
 }
 
 void write_recovery_version() {
-    if ( is_data_media() ) {
-        write_string_to_file("/sdcard/0/clockworkmod/.recovery_version",EXPAND(RECOVERY_VERSION) "\n" EXPAND(TARGET_DEVICE));
-    }
-    write_string_to_file("/sdcard/clockworkmod/.recovery_version",EXPAND(RECOVERY_VERSION) "\n" EXPAND(TARGET_DEVICE));
+    write_string_to_file("/sdcard/0/clockworkmod/.recovery_version",EXPAND(RECOVERY_VERSION) "\n" EXPAND(TARGET_DEVICE));
 }
 
 void
@@ -134,7 +131,7 @@ void show_install_update_menu()
     
     char* install_menu_items[] = {  "choose zip from sdcard",
                                     "install zip from sideload",
-                                    "apply /sdcard/update.zip",
+                                    "apply /sdcard/0/update.zip",
                                     "toggle signature verification",
                                     NULL,
                                     NULL };
@@ -167,13 +164,13 @@ void show_install_update_menu()
                         }
                         else {
                             char confirm[PATH_MAX];
-                            sprintf(confirm, "Yes - Install /sdcard/update.zip to System%d", system);
+                            sprintf(confirm, "Yes - Install /sdcard/0/update.zip to System%d", system);
                             if (confirm_selection("Confirm install?", confirm))
                                 install_zip(SDCARD_UPDATE_FILE);
                         }
                     }
                 }
-                else if (confirm_selection("Confirm install?", "Yes - Install /sdcard/update.zip"))
+                else if (confirm_selection("Confirm install?", "Yes - Install /sdcard/0/update.zip"))
                     install_zip(SDCARD_UPDATE_FILE);
                 break;
             }
@@ -689,11 +686,11 @@ void show_mount_usb_storage_menu()
 int confirm_selection(const char* title, const char* confirm)
 {
     struct stat info;
-    if (0 == stat("/sdcard/clockworkmod/.no_confirm", &info))
+    if (0 == stat("/sdcard/0/clockworkmod/.no_confirm", &info))
         return 1;
 
     char* confirm_headers[]  = {  title, "  THIS CAN NOT BE UNDONE.", "", NULL };
-    int one_confirm = 0 == stat("/sdcard/clockworkmod/.one_confirm", &info);
+    int one_confirm = 0 == stat("/sdcard/0/clockworkmod/.one_confirm", &info);
 #ifdef BOARD_TOUCH_RECOVERY
     one_confirm = 1;
 #endif 
@@ -1187,7 +1184,7 @@ void show_nandroid_advanced_restore_menu(const char* path)
 
 static void run_dedupe_gc(const char* other_sd) {
     ensure_path_mounted("/sdcard");
-    nandroid_dedupe_gc("/sdcard/clockworkmod/blobs");
+    nandroid_dedupe_gc("/sdcard/0/clockworkmod/blobs");
     if (other_sd) {
         ensure_path_mounted(other_sd);
         char tmp[PATH_MAX];
@@ -1287,26 +1284,26 @@ void show_nandroid_menu()
                     {
                         struct timeval tp;
                         gettimeofday(&tp, NULL);
-                        sprintf(backup_path, "/sdcard/clockworkmod/backup/%d", tp.tv_sec);
+                        sprintf(backup_path, "/sdcard/0/clockworkmod/backup/%d", tp.tv_sec);
                     }
                     else
                     {
-                        strftime(backup_path, sizeof(backup_path), "/sdcard/clockworkmod/backup/%F.%H.%M.%S", tmp);
+                        strftime(backup_path, sizeof(backup_path), "/sdcard/0/clockworkmod/backup/%F.%H.%M.%S", tmp);
                     }
                     nandroid_backup(backup_path);
                     write_recovery_version();
                 }
                 break;
             case 1:
-                show_nandroid_restore_menu("/sdcard");
+                show_nandroid_restore_menu("/sdcard/0");
                 write_recovery_version();
                 break;
             case 2:
-                show_nandroid_delete_menu("/sdcard");
+                show_nandroid_delete_menu("/sdcard/0");
                 write_recovery_version();
                 break;
             case 3:
-                show_nandroid_advanced_restore_menu("/sdcard");
+                show_nandroid_advanced_restore_menu("/sdcard/0");
                 write_recovery_version();
                 break;
             case 4:
@@ -1683,7 +1680,7 @@ void process_volumes() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
     sprintf(backup_name, "before-ext4-convert-%d", tp.tv_sec);
-    sprintf(backup_path, "/sdcard/clockworkmod/backup/%s", backup_name);
+    sprintf(backup_path, "/sdcard/0/clockworkmod/backup/%s", backup_name);
 
     ui_set_show_text(1);
     ui_print("Filesystems need to be converted to ext4.\n");
@@ -1703,9 +1700,9 @@ void handle_failure(int ret)
         return;
     if (0 != ensure_path_mounted("/sdcard"))
         return;
-    mkdir("/sdcard/clockworkmod", S_IRWXU | S_IRWXG | S_IRWXO);
-    __system("cp /tmp/recovery.log /sdcard/clockworkmod/recovery.log");
-    ui_print("/tmp/recovery.log was copied to /sdcard/clockworkmod/recovery.log. Please open ROM Manager to report the issue.\n");
+    mkdir("/sdcard/0/clockworkmod", S_IRWXU | S_IRWXG | S_IRWXO);
+    __system("cp /tmp/recovery.log /sdcard/0/clockworkmod/recovery.log");
+    ui_print("/tmp/recovery.log was copied to /sdcard/0/clockworkmod/recovery.log. Please open ROM Manager to report the issue.\n");
 }
 
 int is_path_mounted(const char* path) {
