@@ -265,7 +265,6 @@ int set_active_system(int num) {
     Volume* system1 = volume_for_path("/system1");
     Volume* boot0 = volume_for_path("/boot");
     Volume* boot1 = volume_for_path("/boot1");
-    Volume* userdata = volume_for_path("/data");
 
     handle_volume_request(system0, system1, num);
     handle_volume_request(boot0, boot1, num);
